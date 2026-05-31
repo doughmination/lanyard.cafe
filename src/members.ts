@@ -21,9 +21,9 @@ export const MEMBERS: Member[] = [
     buttonUrl: "https://raw.githubusercontent.com/NPSummers/NPSummers/refs/heads/main/button.png",
   },
   {
-    url: "https://akryst.lol",
+    url: "https://akryst.moe",
     name: "akryst",
-    buttonUrl: "https://akryst.lol/88x31/akryst.gif",
+    buttonUrl: "https://akryst.moe/88x31/akryst.gif",
   },
   {
     url: "https://f1sh.v.recipes",
