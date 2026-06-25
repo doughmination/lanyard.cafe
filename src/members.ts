@@ -2,6 +2,8 @@ export interface Member {
   url: string;
   name: string;
   buttonUrl?: string;
+  discordId?: string;
+  timeZone?: string;
 }
 
 export const MEMBERS: Member[] = [
@@ -9,51 +11,64 @@ export const MEMBERS: Member[] = [
     url: "https://schuh.wtf",
     name: "schuh",
     buttonUrl: "https://cdn.venqoi.lol/schuh.gif",
+    discordId: "492707412504215552",
   },
   {
     url: "https://aureal.dev",
     name: "aureal",
-    buttonUrl: "https://raw.githubusercontent.com/NPSummers/NPSummers/refs/heads/main/button.png",
+    buttonUrl:
+      "https://raw.githubusercontent.com/NPSummers/NPSummers/refs/heads/main/button.png",
+    discordId: "1498977251134279900",
   },
   {
     url: "https://akryst.moe",
     name: "akryst",
     buttonUrl: "https://akryst.moe/88x31/akryst.gif",
+    discordId: "1368371401546928148",
   },
   {
     url: "https://moli.codes",
     name: "f1sh",
-    buttonUrl: "https://raw.githubusercontent.com/NPSummers/NPSummers/refs/heads/main/doesnt_want_to_host_his_own_gif_moli.gif",
+    buttonUrl:
+      "https://raw.githubusercontent.com/NPSummers/NPSummers/refs/heads/main/doesnt_want_to_host_his_own_gif_moli.gif",
+    discordId: "470904884946796544",
   },
   {
-      url: "https://plxne.com",
-      name: "Ranger",
-      buttonUrl: "https://files.plxne.com/raw/nRH5kX.gif",
-  }, 
+    url: "https://plxne.com",
+    name: "Ranger",
+    buttonUrl: "https://files.plxne.com/raw/nRH5kX.gif",
+    discordId: "480900607738380298",
+  },
   {
     url: "https://kie.ac",
     name: "kie.ac",
-    buttonUrl: "https://kie.ac/88x31/button.png"
+    buttonUrl: "https://kie.ac/88x31/button.png",
+    discordId: "673477059904929802",
   },
   {
     url: "https://nichind.dev",
     name: "nichind",
-    buttonUrl: "https://nichind.dev/88x31.gif"
+    buttonUrl: "https://nichind.dev/88x31.gif",
+    discordId: "301035790891352076",
   },
   {
     url: "https://brookerslyn.space",
     name: "brook",
-    buttonUrl: "https://cdn.brookerslyn.space/Screenshot%202026-05-10%20222237(1)(1).png"
+    buttonUrl:
+      "https://cdn.brookerslyn.space/Screenshot%202026-05-10%20222237(1)(1).png",
+    discordId: "647814047210930223",
   },
   {
     url: "https://assumi.ng",
     name: "catcatcat",
-    buttonUrl: "https://assumi.ng/assets/88x31/assuming.gif"
+    buttonUrl: "https://assumi.ng/assets/88x31/assuming.gif",
+    discordId: "1471598614676766826",
   },
   {
     url: "https://c.stupid.cat",
     name: "clove",
-    buttonUrl: "https://c.stupid.cat/assets/88x31/doughmination.gif"
+    buttonUrl: "https://c.stupid.cat/assets/88x31/doughmination.gif",
+    discordId: "1464890289922641993",
   },
 ];
 
@@ -65,7 +80,10 @@ export function getMemberByUrl(url: string): Member | undefined {
   });
 }
 
-export function getAdjacentMembers(currentUrl: string): { prev: Member; next: Member } {
+export function getAdjacentMembers(currentUrl: string): {
+  prev: Member;
+  next: Member;
+} {
   const index = MEMBERS.findIndex((m) => m.url === currentUrl);
   if (index === -1) {
     const lastIdx = MEMBERS.length - 1;

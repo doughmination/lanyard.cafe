@@ -93,6 +93,25 @@ const app = new Elysia()
     return redirect(randomMember().url);
   })
   .get("/api/ring/random", ({ redirect }) => redirect(randomMember().url))
+  .post("/api/members/presence", async ({ body }) => {
+    const { ids } = body as { ids: string[] };
+    const validIds = (Array.isArray(ids) ? ids : []).filter((id) => /^\d+$/.test(id));
+    const results: Record<string, unknown> = {};
+    await Promise.all(
+      validIds.map(async (id) => {
+        try {
+          const r = await fetch(`https://api.lanyard.rest/v1/users/${id}`);
+          if (!r.ok) { results[id] = null; return; }
+          const d = await r.json() as { success: boolean; data: { discord_status: string; discord_user: object } };
+          if (!d.success) { results[id] = null; return; }
+          results[id] = { discord_status: d.data.discord_status, discord_user: d.data.discord_user };
+        } catch {
+          results[id] = null;
+        }
+      })
+    );
+    return { presences: results };
+  })
   .get(
     "/api/embed.js",
     () =>
@@ -103,6 +122,7 @@ const app = new Elysia()
         },
       }),
   )
+  .get("/", () => Bun.file("dist/index.html"))
   .use(staticPlugin({ assets: "dist", prefix: "/" }))
   .listen(8943);
 
