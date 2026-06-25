@@ -10,7 +10,8 @@ export const MEMBERS: Member[] = [
   {
     url: "https://schuh.wtf",
     name: "schuh",
-    buttonUrl: "https://cdn.venqoi.lol/schuh.gif",
+    buttonUrl:
+      "https://raw.githubusercontent.com/NPSummers/NPSummers/refs/heads/main/schuh.gif",
     discordId: "492707412504215552",
   },
   {

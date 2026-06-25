@@ -2,6 +2,86 @@ import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { staticPlugin } from "@elysiajs/static";
 import { MEMBERS, getMemberByUrl, getAdjacentMembers } from "./members";
+import { marked } from "marked";
+import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
+
+const DOCS_DIR = path.join(import.meta.dir, "..", "content", "docs");
+
+const DOCS_CSS = `
+  :root {
+    --cream: #e3d9c5; --cream-dark: #F5EDE0;
+    --pink: #F4A7B9; --pink-dark: #E8879E;
+    --text: #4A3728; --text-light: #8B7A6A;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --cream: #2C2420; --cream-dark: #3D322C;
+      --pink: #D4849A; --pink-dark: #F4A7B9;
+      --text: #E8D5C4; --text-light: #A09080;
+    }
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Quicksand', system-ui, sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; line-height: 1.75; }
+  .container { max-width: 680px; margin: 0 auto; padding: 48px 24px 80px; }
+  nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
+  .nav-home { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--text); text-decoration: none; }
+  .nav-home:hover { color: var(--pink-dark); }
+  .back { font-size: 0.8rem; color: var(--text-light); text-decoration: none; }
+  .back:hover { color: var(--pink-dark); }
+  h1, h2, h3, h4 { font-family: 'DM Serif Display', serif; color: var(--text); line-height: 1.2; margin-top: 2em; margin-bottom: 0.5em; }
+  h1 { font-size: 2.2rem; margin-top: 0; }
+  h2 { font-size: 1.5rem; border-bottom: 1px solid var(--cream-dark); padding-bottom: 6px; }
+  h3 { font-size: 1.15rem; }
+  p { margin: 0.9em 0; }
+  a { color: var(--pink-dark); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: ui-monospace, monospace; font-size: 0.84em; background: var(--cream-dark); padding: 2px 6px; border-radius: 4px; }
+  pre { background: var(--cream-dark); border: 1px solid rgba(0,0,0,0.07); border-radius: 10px; padding: 16px 20px; overflow-x: auto; margin: 1.4em 0; }
+  pre code { background: none; padding: 0; font-size: 0.88em; }
+  hr { border: none; border-top: 1px solid var(--cream-dark); margin: 2.5em 0; }
+  blockquote { border-left: 3px solid var(--pink); margin: 1.2em 0; padding: 2px 0 2px 16px; color: var(--text-light); }
+  table { border-collapse: collapse; width: 100%; margin: 1.4em 0; font-size: 0.9em; }
+  th, td { border: 1px solid var(--cream-dark); padding: 8px 14px; text-align: left; }
+  th { font-weight: 600; background: var(--cream-dark); font-family: 'DM Serif Display', serif; }
+  ul, ol { padding-left: 1.5em; margin: 0.8em 0; }
+  li { margin: 0.35em 0; }
+  img { max-width: 100%; border-radius: 8px; }
+  .doc-list { list-style: none; padding: 0; margin: 1.5em 0; display: flex; flex-direction: column; gap: 10px; }
+  .doc-list a { display: block; background: var(--cream-dark); border-radius: 12px; padding: 14px 18px; color: var(--text); font-family: 'DM Serif Display', serif; font-size: 1.05rem; transition: color 0.15s; }
+  .doc-list a:hover { color: var(--pink-dark); text-decoration: none; }
+  .doc-list .slug { display: block; font-family: 'Quicksand', system-ui, sans-serif; font-size: 0.75rem; color: var(--text-light); margin-top: 2px; }
+`;
+
+const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />`;
+
+function docsPage(title: string, body: string, showBack = true) {
+  return `<!doctype html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>${title} - lanyard.cafe</title>${FONTS}<style>${DOCS_CSS}</style></head><body><div class="container"><nav><a class="nav-home" href="/">lanyard.cafe</a>${showBack ? '<a class="back" href="/docs">← docs</a>' : ""}</nav>${body}</div></body></html>`;
+}
+
+async function getDocTitle(md: string): Promise<string> {
+  const m = md.match(/^#\s+(.+)/m);
+  return m?.[1]?.trim() ?? "docs";
+}
+
+async function listDocs(): Promise<{ slug: string; title: string }[]> {
+  try {
+    const files = (await readdir(DOCS_DIR, { recursive: true })) as string[];
+    const docs = await Promise.all(
+      files
+        .map((f) => f.replace(/\\/g, "/"))
+        .filter((f) => f.endsWith(".md") && f !== "index.md")
+        .map(async (f) => {
+          const slug = f.replace(/\.md$/, "").replace(/\/index$/, "");
+          const content = await readFile(path.join(DOCS_DIR, f), "utf8");
+          return { slug, title: await getDocTitle(content) };
+        }),
+    );
+    return docs;
+  } catch {
+    return [];
+  }
+}
 
 function getSite(req: Request) {
   const fromQuery = new URL(req.url).searchParams.get("url");
@@ -95,20 +175,34 @@ const app = new Elysia()
   .get("/api/ring/random", ({ redirect }) => redirect(randomMember().url))
   .post("/api/members/presence", async ({ body }) => {
     const { ids } = body as { ids: string[] };
-    const validIds = (Array.isArray(ids) ? ids : []).filter((id) => /^\d+$/.test(id));
+    const validIds = (Array.isArray(ids) ? ids : []).filter((id) =>
+      /^\d+$/.test(id),
+    );
     const results: Record<string, unknown> = {};
     await Promise.all(
       validIds.map(async (id) => {
         try {
           const r = await fetch(`https://api.lanyard.rest/v1/users/${id}`);
-          if (!r.ok) { results[id] = null; return; }
-          const d = await r.json() as { success: boolean; data: { discord_status: string; discord_user: object } };
-          if (!d.success) { results[id] = null; return; }
-          results[id] = { discord_status: d.data.discord_status, discord_user: d.data.discord_user };
+          if (!r.ok) {
+            results[id] = null;
+            return;
+          }
+          const d = (await r.json()) as {
+            success: boolean;
+            data: { discord_status: string; discord_user: object };
+          };
+          if (!d.success) {
+            results[id] = null;
+            return;
+          }
+          results[id] = {
+            discord_status: d.data.discord_status,
+            discord_user: d.data.discord_user,
+          };
         } catch {
           results[id] = null;
         }
-      })
+      }),
     );
     return { presences: results };
   })
@@ -122,6 +216,45 @@ const app = new Elysia()
         },
       }),
   )
+  .get("/docs", async () => {
+    const indexPath = path.join(DOCS_DIR, "index.md");
+    const [indexMd, docs] = await Promise.all([
+      readFile(indexPath, "utf8").catch(() => "# docs\n"),
+      listDocs(),
+    ]);
+    const indexHtml = await marked(indexMd);
+    const listHtml = docs.length
+      ? `<ul class="doc-list">${docs.map((d) => `<li><a href="/docs/${d.slug}">${d.title}<span class="slug">/docs/${d.slug}</span></a></li>`).join("")}</ul>`
+      : "";
+    return new Response(docsPage("docs", indexHtml + listHtml, false), {
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+  })
+  .get("/docs/*", async ({ params, set }) => {
+    const rawSlug = (params as Record<string, string>)["*"] ?? "";
+    if (!rawSlug || /\.\./.test(rawSlug) || !/^[a-z0-9\-_/]+$/i.test(rawSlug)) {
+      set.status = 404;
+      return "not found";
+    }
+    let md: string | null = null;
+    for (const candidate of [
+      path.join(DOCS_DIR, `${rawSlug}.md`),
+      path.join(DOCS_DIR, rawSlug, "index.md"),
+    ]) {
+      try { md = await readFile(candidate, "utf8"); break; } catch {}
+    }
+    if (!md) {
+      set.status = 404;
+      return new Response(docsPage("not found", "<h1>not found</h1><p>That doc doesn't exist.</p>"), {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
+    const html = await marked(md);
+    const title = await getDocTitle(md);
+    return new Response(docsPage(title, html), {
+      headers: { "Content-Type": "text/html; charset=utf-8" },
+    });
+  })
   .get("/", () => Bun.file("dist/index.html"))
   .use(staticPlugin({ assets: "dist", prefix: "/" }))
   .listen(8943);

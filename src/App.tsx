@@ -46,7 +46,9 @@ export function App() {
   const [copied, setCopied] = useState(false);
   const [page, setPage] = useState(0);
   const [dark, setDark] = useState(false);
-  const [presences, setPresences] = useState<Record<string, Presence | null>>({});
+  const [presences, setPresences] = useState<Record<string, Presence | null>>(
+    {},
+  );
 
   useEffect(() => {
     fetch("/api/ring")
@@ -57,14 +59,18 @@ export function App() {
 
   useEffect(() => {
     const saved = localStorage.getItem("lc-theme");
-    const pref = saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    const pref =
+      saved === "dark" ||
+      (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches);
     setDark(pref);
     document.documentElement.classList.toggle("dark", pref);
   }, []);
 
   useEffect(() => {
     async function loadPresence() {
-      const ids = (data?.members ?? []).map((m) => m.discordId).filter(Boolean) as string[];
+      const ids = (data?.members ?? [])
+        .map((m) => m.discordId)
+        .filter(Boolean) as string[];
       if (ids.length === 0) return;
       try {
         const r = await fetch("/api/members/presence", {
@@ -73,7 +79,9 @@ export function App() {
           body: JSON.stringify({ ids }),
         });
         if (!r.ok) return;
-        const d = await r.json() as { presences: Record<string, Presence | null> };
+        const d = (await r.json()) as {
+          presences: Record<string, Presence | null>;
+        };
         setPresences(d.presences);
       } catch {
         // ignore
@@ -85,7 +93,7 @@ export function App() {
     return () => clearInterval(poll);
   }, [data?.members]);
 
-const toggleTheme = () => {
+  const toggleTheme = () => {
     const next = !dark;
     setDark(next);
     document.documentElement.classList.toggle("dark", next);
@@ -123,10 +131,13 @@ const toggleTheme = () => {
     return presences[m.discordId]?.discord_status ?? "offline";
   }
 
-const members = data?.members ?? [];
+  const members = data?.members ?? [];
   const totalPages = Math.max(1, Math.ceil(members.length / pagecount));
   const safePage = Math.min(page, totalPages - 1);
-  const pageMembers = members.slice(safePage * pagecount, (safePage + 1) * pagecount);
+  const pageMembers = members.slice(
+    safePage * pagecount,
+    (safePage + 1) * pagecount,
+  );
 
   const embedCode = `<script src="${window.location.origin}/api/embed.js"></script>`;
 
@@ -137,18 +148,22 @@ const members = data?.members ?? [];
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <img src="/lanyard.png" alt="lanyard.cafe logo" className="w-10 h-10" />
+                <img
+                  src="/lanyard.png"
+                  alt="lanyard.cafe logo"
+                  className="w-10 h-10"
+                />
                 <h1 className="font-serif text-4xl md:text-5xl text-text leading-tight">
                   lanyard.cafe
                 </h1>
               </div>
               <p className="font-sans text-text-light text-base mt-2 max-w-lg">
-                the best webring around, built for the lanyard.rest community
+                The cutest lanyard webring and docs!
               </p>
             </div>
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-md bg-cream-dark/80 text-text-light hover:bg-cream-dark transition-all duration-200 text-1xl mt-3"
+              className="text-text-light hover:text-text transition-colors mt-3 text-lg"
               aria-label="theme"
             >
               {dark ? "☀" : "☾"}
@@ -157,60 +172,71 @@ const members = data?.members ?? [];
         </header>
 
         {data && (
-          <section className="mb-12">
+          <section className="mb-12 flex flex-col items-center text-center">
+            <a
+              href="/docs"
+              className="inline-block text-base font-semibold text-text hover:text-pink-dark transition-colors mb-6"
+            >
+              docs →
+            </a>
             <h2 className="font-serif text-2xl text-text mb-4">navigate</h2>
-            <div className="bg-cream-dark/80 backdrop-blur-sm rounded-2xl p-5 border border-cream-dark inline-block min-w-[260px]">
-              <div className="flex gap-3 mb-3">
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex gap-8">
                 <a
                   href={data.prev.url}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-light text-pink-dark font-semibold text-sm hover:bg-pink hover:text-white transition-all duration-200"
+                  className="text-sm font-semibold text-text-light hover:text-pink-dark transition-colors"
                 >
-                  <span>◀</span> prev
+                  ← prev
                 </a>
                 <a
                   href={data.random.url}
-                  className="px-4 py-2 rounded-xl bg-lavender-light text-[#9B7EB5] font-semibold text-sm hover:bg-lavender hover:text-white transition-all duration-200"
+                  className="text-sm font-semibold text-text-light hover:text-pink-dark transition-colors"
                 >
                   random
                 </a>
                 <a
                   href={data.next.url}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-pink-light text-pink-dark font-semibold text-sm hover:bg-pink hover:text-white transition-all duration-200"
+                  className="text-sm font-semibold text-text-light hover:text-pink-dark transition-colors"
                 >
-                  next <span>▶</span>
+                  next →
                 </a>
               </div>
               <p className="text-sm text-text-light">
-                you are at <span className="font-semibold text-text">lanyard.cafe</span>
+                you are at{" "}
+                <span className="font-semibold text-text">lanyard.cafe</span>
               </p>
             </div>
           </section>
         )}
 
         <section className="mb-12">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="font-serif text-2xl text-text">members</h2>
             {totalPages > 1 && (
-              <div className="flex items-center gap-2 text-sm text-text-light">
+              <div className="flex items-center gap-3 text-sm text-text-light">
                 <button
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   disabled={safePage === 0}
-                  className="px-2 py-1 rounded-lg bg-pink-light text-pink-dark font-semibold hover:bg-pink hover:text-white transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="hover:text-pink-dark transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   ◀
                 </button>
-                <span className="tabular-nums">{safePage + 1}/{totalPages}</span>
+                <span className="tabular-nums">
+                  {safePage + 1}/{totalPages}
+                </span>
                 <button
-                  onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                  onClick={() =>
+                    setPage((p) => Math.min(totalPages - 1, p + 1))
+                  }
                   disabled={safePage === totalPages - 1}
-                  className="px-2 py-1 rounded-lg bg-pink-light text-pink-dark font-semibold hover:bg-pink hover:text-white transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="hover:text-pink-dark transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   ▶
                 </button>
               </div>
             )}
           </div>
-          <div className="grid gap-3">
+          <div className="divide-y divide-cream-dark">
             {pageMembers.map((site) => {
               const avatar = getAvatarUrl(site);
               const state = getStatus(site);
@@ -219,24 +245,24 @@ const members = data?.members ?? [];
                 <a
                   key={site.name}
                   href={site.url}
-                  className="group flex items-center justify-between gap-4 bg-cream-dark/80 backdrop-blur-sm rounded-2xl px-5 py-4 border border-cream-dark hover:border-pink/40 hover:bg-cream-dark transition-all duration-200"
+                  className="group flex items-center justify-between gap-4 py-4"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="relative shrink-0">
                       {avatar ? (
                         <img
-                          className="w-10 h-10 rounded-lg object-cover border border-cream-dark"
+                          className="w-10 h-10 rounded-lg object-cover"
                           src={avatar}
                           alt=""
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-cream flex items-center justify-center font-serif text-base text-text-light border border-cream-dark">
+                        <div className="w-10 h-10 rounded-lg bg-cream-dark flex items-center justify-center font-serif text-base text-text-light">
                           {displayName(site).slice(0, 1).toLowerCase()}
                         </div>
                       )}
                       {site.discordId && (
                         <span
-                          className="absolute -right-0.5 -bottom-0.5 w-3 h-3 rounded-full border-2 border-cream-dark"
+                          className="absolute -right-0.5 -bottom-0.5 w-2.5 h-2.5 rounded-full border-2 border-cream"
                           style={{ background: STATUS_COLORS[state] }}
                         />
                       )}
@@ -247,7 +273,10 @@ const members = data?.members ?? [];
                         {displayName(site)}
                       </span>
                       <span className="text-xs text-text-light truncate">
-                        {handle ?? site.url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                        {handle ??
+                          site.url
+                            .replace(/^https?:\/\//, "")
+                            .replace(/\/$/, "")}
                       </span>
                     </div>
 
@@ -258,16 +287,14 @@ const members = data?.members ?? [];
                     )}
                   </div>
 
-                  <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    {site.buttonUrl && (
-                      <img
-                        src={site.buttonUrl}
-                        alt=""
-                        className="w-[88px] h-[31px] border border-cream-dark"
-                        style={{ imageRendering: "pixelated" }}
-                      />
-                    )}
-                  </div>
+                  {site.buttonUrl && (
+                    <img
+                      src={site.buttonUrl}
+                      alt=""
+                      className="w-[88px] h-[31px] shrink-0 opacity-80 group-hover:opacity-100 transition-opacity"
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                  )}
                 </a>
               );
             })}
@@ -276,31 +303,29 @@ const members = data?.members ?? [];
 
         <section className="mb-12">
           <h2 className="font-serif text-2xl text-text mb-4">join</h2>
-          <div className="bg-cream-dark/80 backdrop-blur-sm rounded-2xl p-5 border border-cream-dark">
-            <p className="text-sm text-text-light mb-4 max-w-md">
-              want to add your site to the ring? open a pull request on our{" "}
-              <a href="https://github.com/venqoi/lanyard.cafe" className="text-pink hover:underline">
-                github repo
-              </a>
-            </p>
-            <div>
-              <p className="text-sm font-semibold text-text mb-2">add to your site:</p>
-              <div className="flex gap-2 items-start">
-                <code className="flex-1 bg-cream-dark text-text text-xs p-2.5 rounded-xl border border-cream-dark break-all font-mono">
-                  {embedCode}
-                </code>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(embedCode);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                  className="shrink-0 px-3 py-2 rounded-xl bg-brown-light text-brown-dark font-semibold text-xs hover:bg-brown hover:text-white transition-all duration-200"
-                >
-                  {copied ? "copied!" : "copy"}
-                </button>
-              </div>
-            </div>
+          <p className="text-sm text-text-light mb-4 max-w-md">
+            want to add your site to the ring? please read{" "}
+            <a href="/docs/joining" className="text-pink-dark hover:underline">
+              our docs
+            </a>
+          </p>
+          <p className="text-sm font-semibold text-text mb-2">
+            add to your site:
+          </p>
+          <div className="flex gap-2 items-start">
+            <code className="flex-1 bg-cream-dark text-text text-xs p-2.5 rounded-lg break-all font-mono">
+              {embedCode}
+            </code>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(embedCode);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              className="shrink-0 px-3 py-2 rounded-lg bg-cream-dark text-text-light text-xs hover:text-pink-dark transition-colors"
+            >
+              {copied ? "copied!" : "copy"}
+            </button>
           </div>
         </section>
       </div>
